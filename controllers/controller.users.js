@@ -1,136 +1,106 @@
-const { User } = require('../models/model.user');
-const { Order } = require('../models/model.order');
-const bcrypt = require('bcryptjs');
-const { AppError } = require('../utils/app.error');
-const { catchAsync } = require('../utils/catchAsync');
+const bcrypt = require('bcryptjs')
+const dotenv = require('dotenv')
+const { User } = require('../models/user.model')
+const { Order } = require('../models/order.model')
+const { catchAsync } = require('../utils/catchAsync.util')
+const { createToken } = require('../utils/token.util')
+const { response } = require('express')
+dotenv.config({ path: './config.env' })
 
-const createUser = catchAsync(async (req, res, next) => {
-  try {
-    const { name, password, email, role } = req.body;
-    const accountNumber = Math.floor(Math.random() * 999999);
-    const salt = await bcrypt.genSalt(12);
-    const hashPassword = await bcrypt.hash(password, salt);
+const createUsers = catchAsync(async (req, res, next) => {
+  const { name, email, password, role } = req.body
+  const salt = await bcrypt.genSalt(12)
+  const hashPassword = await bcrypt.hash(password, salt)
 
-    const newUser = await User.create({
-      name,
-      accountNumber,
-      email,
-      password: hashPassword,
-      role,
-    });
+  const user = await User.create({
+    name,
+    email,
+    password: hashPassword,
+    role,
+  })
 
-    newUser.password = undefined;
-    res.status(201).json({
-      newUser,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  user.password = undefined
+
+  res.status(201).json({
+    user,
+  })
+})
 
 //Iniciar sesión (enviar email y password por req.body)
 
-const logins = catchAsync(async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
+const logins = catchAsync(async (req, res = response, next) => {
+  const { email, password } = req.body
+  const user = await User.findOne({ where: { email, password } })
+  const token = await createToken(user.id)
 
-    const user = await User.findOne({ where: { email, status: 'active' } });
+  res.json({
+    status: 'success',
+    token,
+    user: {
+      name: user.name,
+      uid: user.id,
+    },
+  })
+})
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      return next(new AppError('Invalid argument', 400));
-    }
-    res.status(201).json({
-      user,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+// Send response
 
 //Actualizar perfil de usuario (solo name y email)
 const updateUser = catchAsync(async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { name, email } = req.body;
-
-    const user = await User.findOne({ where: { id } });
-    if (!user) {
-      return res.status(400).json({
-        message: 'not cant update',
-      });
-    }
-    await user.update({ name, email });
-
-    res.status(200).json({
-      user,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  const { id } = req.params
+  const { name, email } = req.body
+  const user = await User.findOne({ where: { id } })
+  await user.update({ name, email })
+  res.status(201).json({
+    user,
+    status: 'success',
+  })
+})
 
 //Deshabilitar cuenta de usuario
 const desabilityUser = catchAsync(async (req, res, next) => {
-  try {
-    const { id } = req.body;
-    const user = await User.findOne({ where: { id } });
-    // if (!user) {
-    //   return res.status(200).json({
-    //     message: 'User does exist',
-    //   });
-    // }
-  } catch (err) {
-    next(err);
-  }
-});
+  const { id } = req.params
+  const user = await User.findOne({ where: { id } })
+
+  await user.update({ status: 'cancel' })
+
+  res.status(204).json({ status: 'success' })
+})
 
 //Obtener todas las ordenes hechas por el usuario
 const getOrderOfUser = catchAsync(async (req, res, next) => {
-  try {
-    const { order } = req.body;
-    const user = await User.findAll({ where: { order } });
+  const { order } = req
 
-    res.status(200).json({
-      user,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+  res.json({
+    ok: true,
+    order,
+  })
+})
 
 //Obtener detalles de una sola orden dado un ID
 
 const getOrderById = catchAsync(async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findOne({
-      where: { id },
-      include: [{ model: Order }],
-    });
+  const { sessionUser } = req
+  const orders = await Order.findOne({
+    where: {
+      userId: sessionUser.id,
+    },
+  })
+  res.status(200).json({ orders })
+})
 
-    res.status(200).json({
-      user,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-/*Todas las rutas, excepto para crear usuario e iniciar sesión, se deben proteger por un medio de autentificación, es decir, por JWT.
-  Se debe usar express-validator para el endpoint de crear usuarios.
-  Se debe encriptar la contraseña usando bcryptjs
-  El endpoint /orders y /orders/:id, debe buscar las órdenes del usuario en sesión (del token que se envió), extraer el id del token y usarlo para buscar dichas órdenes.
-  Los métodos PATCH y DELETE deben estar protegidos para que únicamente el dueño de la cuenta a modificar pueda realizar dichas acciones.
-  Para los endpoints /orders, se debe incluir la siguiente información:
-  La comida que se ordenó
-  El restaurant de donde se pidió la comida
-  */
-
+const getAll = catchAsync(async (req, res, next) => {
+  const user = await User.findAll()
+  res.json({
+    user,
+  })
+})
 module.exports = {
-  createUser,
+  createUsers,
   logins,
   updateUser,
   desabilityUser,
   getOrderOfUser,
   getOrderById,
-};
+  getAll,
+}

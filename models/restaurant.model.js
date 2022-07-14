@@ -1,7 +1,7 @@
-const { DataTypes } = require('sequelize');
-const { db } = require('../utils/db');
+const { DataTypes } = require('sequelize')
+const { db } = require('../utils/db')
 
-const Meal = db.define('meal', {
+const Restaurant = db.define('restaurant', {
   id: {
     primaryKey: true,
     autoIncrement: true,
@@ -12,18 +12,20 @@ const Meal = db.define('meal', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  price: {
+  address: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  rating: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    enum: [1, 2, 3, 4, 5],
   },
   status: {
     type: DataTypes.STRING,
-    defaultValue: 'exsist',
-  },
-  restaurantId: {
-    type: DataTypes.INTEGER,
     allowNull: false,
+    defaultValue: 'active',
   },
-});
+})
 
-module.exports = { Meal };
+module.exports = { Restaurant }

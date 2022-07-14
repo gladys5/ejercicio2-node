@@ -1,34 +1,37 @@
-const { app } = require('./app');
-const { db } = require('./utils/db');
-const { User } = require('./models/model.user');
-const { Meal } = require('./models/model.meal');
-const { Order } = require('./models/model.order');
-const { Restaurant } = require('./models/model.restaurant');
-const { Review } = require('./models/model.Review');
+const { app } = require('./app')
+const { db } = require('./utils/db')
+const { User } = require('./models/user.model')
+const { Meal } = require('./models/meal.model')
+const { Order } = require('./models/order.model')
+const { Restaurant } = require('./models/restaurant.model')
+const { Review } = require('./models/review.model')
 db.authenticate()
 
-  .then(() => console.log('db is ready'))
+  .then(() => console.log('db authenticate'))
 
-  .catch((err) => console.log('db not found', err));
+  .catch((err) => console.log(err))
+
+Meal.hasOne(Order)
+Order.belongsTo(Meal)
+
+Restaurant.hasMany(Meal)
+Meal.belongsTo(Restaurant)
+
+Restaurant.hasMany(Review)
+Review.belongsTo(Restaurant)
+
+User.hasMany(Review)
+Review.belongsTo(User)
+
+User.hasMany(Order)
+Order.belongsTo(User)
 
 db.sync()
-  .then(() => console.log('Database synced'))
-  .catch((err) => console.log(err));
+  .then(() => console.log('Database sync'))
+  .catch((err) => console.log(err))
 
-Order.hasOne(Meal);
-Meal.belongsTo(Order);
-
-Restaurant.hasMany(Meal);
-Meal.belongsTo(Restaurant);
-
-User.hasMany(Review);
-Review.belongsTo(User);
-
-User.hasMany(Order);
-Order.belongsTo(User);
-
-const PORT = 5000;
+const PORT = process.env.PORT || 5000
 
 app.listen(PORT, () => {
-  console.log(`app listening on http://localhost:${PORT}!!`);
-});
+  console.log(`app listening on http://localhost:${PORT}!!`)
+})
