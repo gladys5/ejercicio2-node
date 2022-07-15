@@ -7,13 +7,19 @@ const {
   orderWhitStatusActive,
   orderWhitStatusCansel,
 } = require('../controllers/controller.orders')
-const { protectToken, isAdmin } = require('../midellwares/user.middleware')
+const { existMealForOrder } = require('../midellwares/meal.middleware')
+const {
+  protectToken,
+  isAdmin,
+  protectAccount,
+} = require('../midellwares/user.middleware')
+const { checkResult } = require('../midellwares/validators.middleware')
 
-router.post('/', protectToken, newOrder)
+router.post('/', protectToken, checkResult, existMealForOrder, newOrder)
 
-router.get('/:me', isAdmin, getOrderOfOneUser)
+router.get('/me', protectToken, getOrderOfOneUser)
 
-router.patch('/:id', isAdmin, orderWhitStatusActive)
+router.patch('/:id', protectToken, orderWhitStatusActive)
 
 router.delete('/:id', isAdmin, orderWhitStatusCansel)
 

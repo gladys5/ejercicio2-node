@@ -27,7 +27,6 @@ const Order = db.define('order', {
   status: {
     type: DataTypes.STRING,
     allowNull: false,
-    enum: ['active', 'cancelled', 'completed'],
     defaultValue: 'active',
   },
 })

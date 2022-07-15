@@ -30,7 +30,25 @@ const existMeal = catchAsync(async (req, res, next) => {
 
   next()
 })
+const existMealForOrder = catchAsync(async (req, res = response, next) => {
+  const { mealId } = req.body
+
+  const meal = await Meal.findOne({
+    where: {
+      id: mealId,
+      status: 'active',
+    },
+  })
+
+  if (!meal) {
+    return next(new AppError('Meal not found', 404))
+  }
+
+  req.meal = meal
+  next()
+})
 
 module.exports = {
   existMeal,
+  existMealForOrder,
 }
