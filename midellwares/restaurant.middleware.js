@@ -19,7 +19,7 @@ const chechExistRestaurant = catchAsync(async (req, res, next) => {
 
   const restaurant = await Restaurant.findOne({
     where: { id, status: 'active' },
-    attributes: { include: ['status'] },
+    attributes: { exclude: ['status'] },
     include: [
       {
         model: Review,
@@ -30,7 +30,7 @@ const chechExistRestaurant = catchAsync(async (req, res, next) => {
           {
             model: User,
             attributes: {
-              include: ['password', 'role', 'status'],
+              exclude: ['password', 'role', 'status'],
             },
           },
         ],

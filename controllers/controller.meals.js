@@ -5,11 +5,8 @@ const { catchAsync } = require('../utils/catchAsync.util')
 //Crear una nueva comida en el restaurant, siendo :id el id del restaurant (enviar name, price (INT) en req.body)
 const newMealById = catchAsync(async (req, res, next) => {
   const { name, price } = req.body
-
   const restaurantId = req.restaurant.id
-
-  const meal = await Meal.create({ name, price, restaurantId })
-
+  const meal = new Meal({ name, price, restaurantId })
   res.status(201).json({
     meal,
     status: 'success',
@@ -41,10 +38,11 @@ const getMealThatIsActive = catchAsync(async (req, res, next) => {
 
 //Obtener por id una comida con status active
 const getMealById = catchAsync(async (req, res, next) => {
+  const { meal } = req
   const { id } = req.params
-  const meal = await Meal.findOne({ where: { id }, include: Restaurant })
-
-  res.status(200).json({
+  const foundMeal = await Meal.findOne({ where: { id } })
+  res.json({
+    foundMeal,
     meal,
   })
 })
@@ -67,7 +65,7 @@ const disable = catchAsync(async (req, res, next) => {
   const { id } = req.params
   const meal = await Meal.findOne({ where: { id } })
 
-  await Meal.update({ status: 'disable' })
+  await meal.update({ status: 'disable' })
   res.status(201).json({
     meal,
   })

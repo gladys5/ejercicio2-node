@@ -3,26 +3,30 @@ const dotenv = require('dotenv')
 const { User } = require('../models/user.model')
 const { Order } = require('../models/order.model')
 const { catchAsync } = require('../utils/catchAsync.util')
-const { createToken } = require('../utils/token.util')
-const { response } = require('express')
+const jwt = require('jsonwebtoken')
 dotenv.config({ path: './config.env' })
 
 const createUsers = catchAsync(async (req, res, next) => {
-  const { name, email, password, role } = req.body
+  const { name, age, email, password, role } = req.body
+
+  // Hash password
   const salt = await bcrypt.genSalt(12)
   const hashPassword = await bcrypt.hash(password, salt)
 
-  const user = await User.create({
+  const newUser = await User.create({
     name,
+    age,
     email,
     password: hashPassword,
     role,
   })
 
-  user.password = undefined
+  // Remove password from response
+  newUser.password = undefined
 
   res.status(201).json({
-    user,
+    status: 'success',
+    newUser,
   })
 })
 
@@ -30,16 +34,35 @@ const createUsers = catchAsync(async (req, res, next) => {
 
 const logins = catchAsync(async (req, res = response, next) => {
   const { email, password } = req.body
-  const user = await User.findOne({ where: { email, password } })
-  const token = await createToken(user.id)
 
-  res.json({
+  // Validate credentials (email)
+  const user = await User.findOne({
+    where: {
+      email,
+      status: 'active',
+    },
+  })
+
+  if (!user) {
+    return next(new AppError('Credentials invalid', 400))
+  }
+
+  // Validate password
+  const isPasswordValid = await bcrypt.compare(password, user.password)
+
+  if (!isPasswordValid) {
+    return next(new AppError('Credentials invalid', 400))
+  }
+
+  // Generate JWT (JsonWebToken) ->
+  const token = await jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    expiresIn: '30d',
+  })
+  console.log(token)
+  // Send response
+  res.status(200).json({
     status: 'success',
     token,
-    user: {
-      name: user.name,
-      uid: user.id,
-    },
   })
 })
 
@@ -47,34 +70,25 @@ const logins = catchAsync(async (req, res = response, next) => {
 
 //Actualizar perfil de usuario (solo name y email)
 const updateUser = catchAsync(async (req, res, next) => {
-  const { id } = req.params
-  const { name, email } = req.body
-  const user = await User.findOne({ where: { id } })
+  const { user } = req
+  const { name, email } = request.body
   await user.update({ name, email })
-  res.status(201).json({
-    user,
-    status: 'success',
-  })
+  res.status(200).json({ status: 'succes' })
 })
 
 //Deshabilitar cuenta de usuario
 const desabilityUser = catchAsync(async (req, res, next) => {
   const { id } = req.params
   const user = await User.findOne({ where: { id } })
-
-  await user.update({ status: 'cancel' })
-
-  res.status(204).json({ status: 'success' })
+  await user.update({ status: 'deleted' })
+  res.status(200).json({ status: 'succes' })
 })
 
 //Obtener todas las ordenes hechas por el usuario
 const getOrderOfUser = catchAsync(async (req, res, next) => {
-  const { order } = req
-
-  res.json({
-    ok: true,
-    order,
-  })
+  const { sessionUser } = req
+  const order = await Order.findAll({ where: { userId: sessionUser.id } })
+  res.status(200).json({ order })
 })
 
 //Obtener detalles de una sola orden dado un ID
@@ -90,10 +104,8 @@ const getOrderById = catchAsync(async (req, res, next) => {
 })
 
 const getAll = catchAsync(async (req, res, next) => {
-  const user = await User.findAll()
-  res.json({
-    user,
-  })
+  const users = await User.findAll({ attributes: { exclude: ['password'] } })
+  res.status(200).json({ users })
 })
 module.exports = {
   createUsers,

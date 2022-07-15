@@ -20,20 +20,11 @@ const { existMeal } = require('../midellwares/meal.middleware')
 const router = Router()
 
 router.get('/:id', existMeal, getMealById)
+router.get('/', getMealThatIsActive)
 
-router.use(protectToken, isAdmin)
+router.use(protectToken)
 
-router.post(
-  '/:id',
-  [
-    check('name', 'the name is require').not().isEmpty(),
-    check('price', 'the price is require').not().isEmpty(),
-    check('price', 'the price must be a number').not().isString(),
-    checkResult,
-    existRestaurantId,
-  ],
-  newMealById
-)
+router.post('/:id', chechExistRestaurant, newMealById)
 
 router.patch(
   '/:id',
@@ -47,6 +38,6 @@ router.patch(
   updateMeal
 )
 
-router.delete('/:id', existMeal, disable)
+router.delete('/:id', disable)
 
 module.exports = { MealRouter: router }

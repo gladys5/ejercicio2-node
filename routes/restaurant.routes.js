@@ -33,29 +33,14 @@ router.get('/', getRestaurantActive)
 
 router.get('/:id', getRestaurantById)
 router.use(protectToken)
-router.post(
-  '/reviews/restaurantId',
-  chechExistRestaurant,
-  existRestaurantId,
-  isAdmin,
-  reviewOfRestaurant
-)
+router.post('/reviews/:id', chechExistRestaurant, reviewOfRestaurant)
 
-router.patch(
-  '/reviews/:id',
-  chechExistRestaurant,
-  isAdmin,
-  existRestaurantId,
-  existReview,
-  ratingParameter,
-  updateReview
-)
+router.patch('/reviews/:reviewsId', chechExistRestaurant, isAdmin, updateReview)
 
 router.delete(
   '/reviews/:id',
   isAdmin,
   chechExistRestaurant,
-  existRestaurantId,
   existReview,
   reviewDown
 )
@@ -70,12 +55,6 @@ router.post(
 
 router.patch('/:id', isAdmin, updateRestaurant)
 
-router.delete(
-  '/:id',
-  chechExistRestaurant,
-  existRestaurantId,
-  isAdmin,
-  desabilityRestaurant
-)
+router.delete('/:id', isAdmin, desabilityRestaurant)
 
 module.exports = { RestaurantRouter: router }
