@@ -59,14 +59,17 @@ const desabilityRestaurant = catchAsync(async (req, res, next) => {
 
 const reviewOfRestaurant = catchAsync(async (req, res, next) => {
   const { comment, rating } = req.body
-
   const restaurantId = +req.params.id
-
   const userId = req.sessionUser.id
-
-  const review = new Review({ userId, comment, restaurantId, rating })
+  const review = await Review.create({
+    userId,
+    comment,
+    restaurantId,
+    rating,
+  })
 
   res.status(201).json({
+    review,
     status: 'success',
   })
 })
@@ -74,20 +77,16 @@ const reviewOfRestaurant = catchAsync(async (req, res, next) => {
 //Actualizar una reseña hecha en un restaurant, siendo :id el id del restaurant (comment, rating) SOLO EL AUTOR DE LA RESEÑA PUEDE ACTUALIZAR SU PROPIA RESEÑA
 
 const updateReview = catchAsync(async (req, res, next) => {
-  sessionUser.req
-  const { restaurantId } = req.params
+  const { review } = req
+
   const { comment, rating } = req.body
-  const review = await Review.findOne({
-    where: { restaurantId },
-    include: Restaurant,
-  })
+
   await review.update({
     comment,
     rating,
   })
-  res.status(201).json({
-    review,
 
+  res.status(200).json({
     status: 'success',
   })
 })

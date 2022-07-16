@@ -6,7 +6,7 @@ const { catchAsync } = require('../utils/catchAsync.util')
 const newMealById = catchAsync(async (req, res, next) => {
   const { name, price } = req.body
   const restaurantId = req.restaurant.id
-  const meal = await Meal.create({ name, price, restaurantId })
+  const meal = await new Meal.create({ name, price, restaurantId })
   res.status(201).json({
     meal,
     status: 'success',

@@ -11,7 +11,7 @@ const newOrder = catchAsync(async (req, res, next) => {
 
   const totalPrice = quantity * meal.price
 
-  const order = new Order({
+  const order = await Order.create({
     mealId: meal.id,
     userId: sessionUser.id,
     totalPrice,

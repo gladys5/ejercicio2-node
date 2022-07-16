@@ -24,7 +24,7 @@ const chechExistRestaurant = catchAsync(async (req, res, next) => {
       {
         model: Review,
         attributes: {
-          include: ['status', 'restaurantId', 'userId'],
+          exclude: ['status', 'restaurantId', 'userId'],
         },
         include: [
           {

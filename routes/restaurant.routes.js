@@ -33,15 +33,31 @@ router.get('/', getRestaurantActive)
 
 router.get('/:id', getRestaurantById)
 router.use(protectToken)
-router.post('/reviews/:id', chechExistRestaurant, reviewOfRestaurant)
+router.post(
+  '/reviews/:id',
+  [
+    check('comment', 'the comment is require').not().isEmpty(),
+    checkResult,
+    ratingParameter,
+    chechExistRestaurant,
+  ],
+  reviewOfRestaurant
+)
 
-router.patch('/reviews/:reviewsId', chechExistRestaurant, isAdmin, updateReview)
+router.patch(
+  'reviews/:id',
+  checkResult,
+  ratingParameter,
+  existRestaurantId,
+  existReview,
+  updateReview
+)
 
 router.delete(
   '/reviews/:id',
   isAdmin,
   chechExistRestaurant,
-  existReview,
+
   reviewDown
 )
 router.post(

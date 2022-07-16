@@ -14,13 +14,13 @@ const {
   protectAccount,
 } = require('../midellwares/user.middleware')
 const { checkResult } = require('../midellwares/validators.middleware')
-
-router.post('/', protectToken, checkResult, existMealForOrder, newOrder)
+const { orderExistByUser } = require('../midellwares/orderExist.middleware')
+router.post('/', protectToken, existMealForOrder, newOrder)
 
 router.get('/me', protectToken, getOrderOfOneUser)
 
 router.patch('/:id', protectToken, orderWhitStatusActive)
 
-router.delete('/:id', isAdmin, orderWhitStatusCansel)
+router.delete('/:id', protectToken, isAdmin, orderWhitStatusCansel)
 
 module.exports = { OrderRouter: router }
